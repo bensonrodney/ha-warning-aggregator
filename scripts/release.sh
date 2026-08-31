@@ -28,7 +28,16 @@ esac
 tag="v${new}"
 echo ">> releasing ${tag}"
 
-git commit -aqm "Release ${tag}"
+if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+    echo "tag ${tag} already exists" >&2
+    exit 1
+fi
+
+if [ -n "$(git status --porcelain)" ]; then
+    git commit -aqm "Release ${tag}"
+else
+    echo ">> version unchanged — tagging the current commit"
+fi
 git tag -a "${tag}" -m "${tag}"
 
 for remote in $(git remote); do
