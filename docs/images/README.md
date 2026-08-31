@@ -1,10 +1,10 @@
 # Screenshots
 
 Used by the root `README.md` "Usage" section. Captured from a real Home
-Assistant with `brands/../` on a sandbox instance (Playwright).
+Assistant on a sandbox instance (Playwright).
 
-Each has a `-dark.png` twin; the README swaps them with `<picture>` +
-`prefers-color-scheme`.
+**Dark mode only** — capture every screenshot with the browser context in
+`color_scheme="dark"`. No light-mode twins.
 
 | File | Shows |
 | --- | --- |
