@@ -25,8 +25,3 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
-          # `topics` just checks the repo's GitHub "About" topics are set — add
-          # some (home-assistant, hacs, home-assistant-integration, …) and drop
-          # this line. The other 7 checks (description, license, issues,
-          # information, hacsjson, integration_manifest, archived) run.
-          ignore: topics
