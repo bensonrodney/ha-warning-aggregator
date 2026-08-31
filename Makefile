@@ -1,6 +1,6 @@
 RUFF_VERSION := 0.16.5
 
-.PHONY: help version release test lint hacs zip
+.PHONY: help version release test lint hacs manifest zip
 
 help:
 	@echo "make version              print the current integration version"
@@ -9,6 +9,7 @@ help:
 	@echo "make test                 run the test suite"
 	@echo "make lint                 ruff check + format --check"
 	@echo "make hacs                 offline HACS checks"
+	@echo "make manifest             hassfest-style manifest checks"
 	@echo "make zip                  build warning_aggregator.zip"
 
 version:
@@ -31,6 +32,9 @@ lint:
 
 hacs:
 	python3 scripts/hacs_check.py
+
+manifest:
+	python3 scripts/manifest_check.py
 
 zip:
 	python3 scripts/build_zip.py

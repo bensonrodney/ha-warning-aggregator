@@ -7,21 +7,21 @@ on:
   schedule:
     - cron: "23 4 * * 1"
 
+# home-assistant/actions/hassfest and hacs/action are both Docker actions that
+# assume a VM runner + the GitHub API, so on a Gitea container runner they only
+# ever fail. These jobs run the file-only equivalents; the real actions run in
+# .github/workflows/validate.yml for when the repo is on GitHub.
 jobs:
-  hassfest:
-    name: hassfest
+  manifest:
+    name: manifest
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: home-assistant/actions/hassfest@master
+      - run: python3 scripts/manifest_check.py
 
   hacs:
     name: HACS
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # The full hacs/action needs the GitHub API (repo description/topics/issues)
-      # and home-assistant/brands, none of which a Gitea runner can reach, so it
-      # only ever fails here. This runs the file-only HACS checks; the real
-      # action runs in .github/workflows/validate.yml once the repo is on GitHub.
       - run: python3 scripts/hacs_check.py
