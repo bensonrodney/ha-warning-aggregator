@@ -21,6 +21,8 @@ UI-configured helpers and a Lovelace card.
 - **Monitored entity** — pick any entity; the setup form adapts to whether it is
   a switch, a number or text and asks only the relevant question. Produces one
   `binary_sensor` (device class `problem`).
+- **Template check** — when the built-in kinds aren't enough, a Jinja template
+  decides: a problem when it renders truthy, OK otherwise. Same `problem` sensor.
 - **Aggregator** — point it at one or more **labels** and it combines every
   labelled entity into a single `problem` sensor that knows *which* entities are
   tripped.
@@ -29,7 +31,7 @@ UI-configured helpers and a Lovelace card.
 
 | Platform | What you get |
 | --- | --- |
-| `binary_sensor` | One `problem` sensor per **Monitored entity**, and one per **Aggregator**. |
+| `binary_sensor` | One `problem` sensor per **Monitored entity** / **Template check**, and one per **Aggregator**. |
 | `sensor` | A `<name> Problem count` for each **Aggregator**. |
 | Lovelace card | `custom:warning-aggregator-card`, registered automatically — no resource to add. |
 
@@ -73,7 +75,7 @@ entity that carries a label you choose.
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="docs/images/wa-menu-dark.png">
-     <img src="docs/images/wa-menu.png" alt="The Warning Aggregator helper-type menu: Monitored entity or Aggregator" width="560">
+     <img src="docs/images/wa-menu.png" alt="The Warning Aggregator helper-type menu: Monitored entity, Template check or Aggregator" width="560">
    </picture>
 
 4. Fill in the form and **Submit**:
@@ -122,16 +124,44 @@ dropping out…
   <img src="docs/images/monitor-entity.png" alt="The adaptive check form for a numeric entity" width="620">
 </picture>
 
-You get `binary_sensor.<name>` (device class **Problem**) — `on` when the check
-fails — with a **`reason`** attribute explaining the verdict (`12 is below 20`,
-`'error' matches 'Error'`). Because you labelled it, `binary_sensor.house_status`
-now counts it.
+You get `binary_sensor.warn_agg_<name>` (device class **Problem**) — `on` when the
+check fails — with a **`reason`** attribute explaining the verdict (`12 is below
+20`, `'error' matches 'Error'`). The `warn_agg_` prefix keeps every monitor
+together in the entity list and pickers; the friendly name stays whatever you
+typed, and you can still rename the entity_id afterwards. Because you labelled it,
+`binary_sensor.house_status` now counts it.
 
 The cog icon re-tunes the thresholds. To watch a *different* entity, delete the
 helper and make a new one.
 
 > You can also skip the wrapper: put the `Monitored` label straight onto any
 > native `problem` binary_sensor and the aggregator will include it.
+
+#### Template check
+
+When the adaptive form can't express the rule — comparing two entities, a time
+window, "any of these three" — choose **Template check** from the same menu
+instead of *Monitored entity*.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/monitor-template-dark.png">
+  <img src="docs/images/monitor-template.png" alt="The Template check form" width="620">
+</picture>
+
+- **Problem template** — a problem when it renders truthy (`true`, `"on"`, a
+  non-empty string); OK when it renders `false` / `""` / `"off"`. Same rule as a
+  Home Assistant template `binary_sensor`.
+- **Reason template** (optional) — rendered into the `reason` attribute and the
+  card's list.
+- **When the template errors or renders nothing** — treat as a problem (default)
+  or OK.
+
+```jinja
+{{ states('sensor.freezer_temp') | float(0) > -15 }}
+```
+
+You get the same `binary_sensor.warn_agg_<name>`; label it and an Aggregator
+picks it up like any other monitor.
 
 ### 3. Add the card to a dashboard
 
@@ -141,8 +171,9 @@ The card registers itself once you have at least one helper — no resource to a
 2. Search for **Warning Aggregator** (it's under *Custom*). If it's missing,
    hard-refresh the browser (**Ctrl/Cmd-Shift-R**).
 3. In the card editor set **Aggregator sensor** to `binary_sensor.house_status`.
-   Optionally change the title, the "all OK" text, or tick *hide when everything
-   is OK*.
+   The **title** tracks that sensor's name (it re-fills whenever you switch the
+   sensor); clear or override it after, along with the "all OK" text or the
+   *hide when everything is OK* tick.
 4. **Save**.
 
 Green **"All Sensors OK"** when nothing is wrong; otherwise a warning header with
@@ -165,7 +196,7 @@ more-info dialog).
 ```yaml
 type: custom:warning-aggregator-card
 entity: binary_sensor.house_status
-# title: House status                  # optional, defaults to the sensor's name
+# title: House status                  # optional; the UI editor pre-fills the sensor's name
 # ok_text: All Sensors OK              # optional
 # problem_text: Sensors need attention # optional (header when tripped)
 # hide_when_ok: false                  # optional — render nothing while all OK
@@ -181,6 +212,18 @@ label: monitored
 problem_states: [warning]   # states counted as a problem (default: [warning])
 ```
 </details>
+
+### Trigger an automation on good ↔ not-good
+
+Every aggregator and monitored entity is a `binary_sensor` with the `problem`
+device class, so an automation triggers on the same boolean the card uses:
+
+1. **Settings → Automations → Create automation → Add trigger**
+2. Search for the sensor by name and pick the **binary sensor** entity (not the
+   device — Home Assistant 2026.7's editor doesn't list device triggers).
+3. Choose **State**, then set **To** to **Problem** (started failing) or **OK**
+   (all clear). Home Assistant shows those labels instead of `on`/`off` because
+   of the `problem` device class.
 
 ### Get notified
 
@@ -208,7 +251,8 @@ actions:
 
 | Entity | Source | Key attributes |
 | --- | --- | --- |
-| `binary_sensor.<name>` | Monitored entity | `watched_entity`, `watched_state`, `kind`, `reason` |
+| `binary_sensor.warn_agg_<name>` | Monitored entity | `watched_entity`, `watched_state`, `kind`, `reason` |
+| `binary_sensor.warn_agg_<name>` | Template check | `value_template`, `kind`, `reason` |
 | `binary_sensor.<name>` | Aggregator | `problem_entities`, `problem_names`, `problem_count`, `watched_count`, `watched_entities`, `labels`, `match` |
 | `sensor.<name>_problem_count` | Aggregator | `problem_entities`, `problem_names` |
 
