@@ -297,18 +297,36 @@ class WarningAggregatorCardEditor extends HTMLElement {
   }
 }
 
-customElements.define("warning-aggregator-card", WarningAggregatorCard);
-customElements.define("warning-aggregator-card-editor", WarningAggregatorCardEditor);
+function registerElements() {
+  if (customElements.get("warning-aggregator-card")) return;
+  customElements.define("warning-aggregator-card", WarningAggregatorCard);
+  customElements.define(
+    "warning-aggregator-card-editor",
+    WarningAggregatorCardEditor,
+  );
+}
+
+// Home Assistant swaps in a scoped custom-element registry while it boots.
+// Defining before that swap registers on the wrong registry and the card
+// loader never finds the element ("Configuration error"). `home-assistant`
+// is defined on the final registry, so wait for it.
+if (customElements.get("home-assistant")) {
+  registerElements();
+} else {
+  customElements.whenDefined("home-assistant").then(registerElements);
+}
 
 window.customCards = window.customCards || [];
-window.customCards.push({
-  type: "warning-aggregator-card",
-  name: "Warning Aggregator",
-  description:
-    "Green 'All Sensors OK', or a warning with the list of monitors that are not OK.",
-  preview: true,
-  documentationURL: "https://github.com/bensonrodney/ha-warning-aggregator",
-});
+if (!window.customCards.some((c) => c.type === "warning-aggregator-card")) {
+  window.customCards.push({
+    type: "warning-aggregator-card",
+    name: "Warning Aggregator",
+    description:
+      "Green 'All Sensors OK', or a warning with the list of monitors that are not OK.",
+    preview: true,
+    documentationURL: "https://github.com/bensonrodney/ha-warning-aggregator",
+  });
+}
 
 // eslint-disable-next-line no-console
 console.info(
