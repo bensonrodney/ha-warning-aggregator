@@ -1,10 +1,15 @@
 # Brand assets
 
-The icon/logo Home Assistant shows for this integration are **not** loaded from
-this repository — Home Assistant serves them from
-[`home-assistant/brands`](https://github.com/home-assistant/brands). The files
-here are the source of truth; they have to be contributed to that repo for the
-artwork to appear in the *Add integration* dialog and the Integrations page.
+Two places, one source (`generate_logo.py`):
+
+- **`../custom_components/warning_aggregator/brand/`** — `icon.png`, `logo.png`,
+  `dark_logo.png`. HACS serves these in its store and its `brands` validation
+  check looks for `brand/icon.png`. Committed, shipped in the release zip.
+- **`custom_integrations/warning_aggregator/`** (this folder) — the full set at
+  the sizes [`home-assistant/brands`](https://github.com/home-assistant/brands)
+  wants. Home Assistant **core** serves the *Add integration* dialog / Integrations
+  page icon from that repo, not from here — so these must be PR'd there for the
+  artwork to show up in HA itself.
 
 ## Files
 

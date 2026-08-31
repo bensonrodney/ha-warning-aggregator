@@ -123,6 +123,17 @@ def check_integration() -> None:
         )
     ok(f"custom_components/{folder.name}/manifest.json is valid for HACS")
 
+    # HACS `brands` check: a local brand/icon.png, else the domain must be in
+    # the home-assistant/brands repo (which we can't check offline).
+    if (folder / "brand" / "icon.png").is_file():
+        ok(f"custom_components/{folder.name}/brand/icon.png present")
+    else:
+        fail(
+            f"custom_components/{folder.name}/brand/icon.png is missing "
+            "(needed for the HACS 'brands' check unless the domain is in "
+            "home-assistant/brands)"
+        )
+
 
 def check_readme() -> None:
     for name in ("README.md", "README.MD", "readme.md"):

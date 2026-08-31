@@ -14,7 +14,11 @@ import pathlib
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = pathlib.Path(__file__).resolve().parent
+ROOT = HERE.parent
+# Source of truth for the home-assistant/brands PR.
 OUT = HERE / "custom_integrations" / "warning_aggregator"
+# In-repo copy HACS serves and its `brands` check looks for.
+BRAND = ROOT / "custom_components" / "warning_aggregator" / "brand"
 FONT_PATH = "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"
 
 AMBER_TOP = (255, 187, 58)
@@ -123,25 +127,34 @@ def _fit(img: Image.Image, box: int) -> Image.Image:
     )
 
 
-def _save(img: Image.Image, name: str) -> None:
-    path = OUT / name
-    img.save(path, optimize=True)
+def _save(img: Image.Image, out_dir: pathlib.Path, name: str) -> None:
+    img.save(out_dir / name, optimize=True)
     print(f"  {name:22} {img.width}x{img.height}")
 
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
-    print(f"writing to {OUT}")
+    BRAND.mkdir(parents=True, exist_ok=True)
 
-    _save(render_icon(256), "icon.png")
-    _save(render_icon(512), "icon@2x.png")
-
+    icon = render_icon(256)
+    icon2x = render_icon(512)
+    logos = {}
     for dark in (False, True):
         logo2x = _fit(render_logo(dark), 512)
         logo1x = logo2x.resize((logo2x.width // 2, logo2x.height // 2), Image.LANCZOS)
-        prefix = "dark_logo" if dark else "logo"
-        _save(logo1x, f"{prefix}.png")
-        _save(logo2x, f"{prefix}@2x.png")
+        logos["dark_logo" if dark else "logo"] = (logo1x, logo2x)
+
+    print(f"writing brands assets to {OUT}")
+    _save(icon, OUT, "icon.png")
+    _save(icon2x, OUT, "icon@2x.png")
+    for prefix, (logo1x, logo2x) in logos.items():
+        _save(logo1x, OUT, f"{prefix}.png")
+        _save(logo2x, OUT, f"{prefix}@2x.png")
+
+    print(f"writing in-repo brand/ assets to {BRAND}")
+    _save(icon, BRAND, "icon.png")
+    _save(logos["logo"][0], BRAND, "logo.png")
+    _save(logos["dark_logo"][0], BRAND, "dark_logo.png")
 
 
 if __name__ == "__main__":
