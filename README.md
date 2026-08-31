@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="brands/custom_integrations/warning_aggregator/logo.png" alt="Warning Aggregator" width="220">
+</p>
+
 # Warning Aggregator
 
 [![GitHub Release][release-shield]][releases]
