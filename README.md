@@ -34,6 +34,7 @@ UI-configured helpers and a Lovelace card.
 | `binary_sensor` | One `problem` sensor per **Monitored entity** / **Template check**, and one per **Aggregator**. |
 | `sensor` | A `<name> Problem count` for each **Aggregator**. |
 | Lovelace card | `custom:warning-aggregator-card`, registered automatically — no resource to add. |
+| Automation blueprint | _Warning Aggregator — act on a problem_, [one-click import](#trigger-an-automation-on-good--not-good). |
 
 **Requires Home Assistant 2025.1 or newer.**
 
@@ -148,8 +149,10 @@ instead of *Monitored entity*.
 {{ states('sensor.freezer_temp') | float(0) > -15 }}
 ```
 
-You get the same `binary_sensor.warn_agg_<name>`; label it and an Aggregator
-picks it up like any other monitor.
+Truthy is the problem, so name it for the problem (**Freezer Problem**, not
+*Freezer OK*) — it matches the `problem` device class. You get the same
+`binary_sensor.warn_agg_<name>`; label it and an Aggregator picks it up like any
+other monitor.
 
 ### 3. Add the card to a dashboard
 
@@ -198,14 +201,23 @@ problem_states: [warning]   # states counted as a problem (default: [warning])
 ### Trigger an automation on good ↔ not-good
 
 Every aggregator and monitored entity is a `binary_sensor` with the `problem`
-device class, so an automation triggers on the same boolean the card uses:
+device class, so an automation triggers on the same boolean the card uses.
 
-1. **Settings → Automations → Create automation → Add trigger**
-2. Search for the sensor by name and pick the **binary sensor** entity (not the
-   device — Home Assistant 2026.7's editor doesn't list device triggers).
-3. Choose **State**, then set **To** to **Problem** (started failing) or **OK**
-   (all clear). Home Assistant shows those labels instead of `on`/`off` because
-   of the `problem` device class.
+**With the blueprint (recommended).** Import it once:
+
+[![Open your Home Assistant instance and show the blueprint import dialog.](https://my.home-assistant.io/badges/blueprint_import.svg)][blueprint-import]
+
+…then **Settings → Automations → Create automation → _Warning Aggregator — act on
+a problem_**. Pick the sensor, drop in what to do, save. The trigger is built in:
+it fires the **moment the sensor leaves OK** — for any reason, including the
+sensor itself dropping out. A second action for "back to OK" is optional.
+
+**By hand.** Add a trigger → search the sensor by name → pick the **binary
+sensor** entity → **State**. Set **From** to **OK** and leave **To** blank — that
+is the "as soon as anything is wrong" trigger. (**To → Problem** instead only
+catches a clean OK→problem flip and misses the sensor going unavailable.) Home
+Assistant's editor doesn't list device triggers, so this entity State trigger is
+the manual route.
 
 ### Get notified
 
@@ -217,8 +229,7 @@ mode: single
 triggers:
   - trigger: state
     entity_id: binary_sensor.house_status
-    from: "off"
-    to: "on"
+    from: "off" # left OK — fires on any problem, incl. the sensor dropping out
 variables:
   tripped: "{{ state_attr('binary_sensor.house_status', 'problem_names') }}"
 actions:
@@ -323,3 +334,4 @@ pattern][pattern]. README structure follows
 [validate-workflow]: https://github.com/bensonrodney/ha-warning-aggregator/actions/workflows/validate.yml
 [validate-shield]: https://img.shields.io/github/actions/workflow/status/bensonrodney/ha-warning-aggregator/validate.yml?style=for-the-badge&label=validate
 [pattern]: https://github.com/bensonrodney/ha-warning-aggregator/blob/main/docs/pattern.md
+[blueprint-import]: https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fbensonrodney%2Fha-warning-aggregator%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fwarning_aggregator%2Fon_problem.yaml
