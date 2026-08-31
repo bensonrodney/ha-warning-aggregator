@@ -70,6 +70,9 @@ entity that carries a label you choose.
 2. **Settings → Devices & Services → Helpers → ➕ Create Helper → Warning
    Aggregator**.
 3. Choose **Aggregator**.
+
+   <img src="docs/images/wa-menu.png" alt="The Warning Aggregator helper-type menu: Monitored entity or Aggregator" width="560">
+
 4. Fill in the form and **Submit**:
 
    | Field | Set it to |
@@ -79,7 +82,7 @@ entity that carries a label you choose.
    | **Label matching** | *Any label* — watch entities in any selected label (*All* = only entities carrying every one) |
    | **States treated as a problem** | leave as `warning` — Monitored-entity sensors are always counted regardless |
 
-<img src="docs/images/create-aggregator.png" alt="Create Helper → Warning Aggregator menu and the Aggregator form" width="720">
+<img src="docs/images/create-aggregator.png" alt="The Aggregator helper form" width="620">
 
 `binary_sensor.house_status` is now created. It stays **off** until a monitored
 entity trips. To change any of this later: **Helpers →** click the helper **→ the
@@ -108,7 +111,7 @@ dropping out…
    | text | **Text to match** (case-insensitive), **Comparison** `equals` / `contains`, and **A match means** `a problem` or `OK` (anything else being the problem) |
    | *any of the above* | **When there is no value** (unavailable / unknown / null) → *treat as a problem* (default) or *treat as OK* |
 
-<img src="docs/images/monitor-entity.png" alt="Monitored entity: the entity picker and the adaptive check form for a numeric entity" width="720">
+<img src="docs/images/monitor-entity.png" alt="The adaptive check form for a numeric entity" width="620">
 
 You get `binary_sensor.<name>` (device class **Problem**) — `on` when the check
 fails — with a **`reason`** attribute explaining the verdict (`12 is below 20`,
