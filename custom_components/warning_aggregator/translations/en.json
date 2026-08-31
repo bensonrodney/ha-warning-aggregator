@@ -1,0 +1,134 @@
+{
+  "title": "Warning Aggregator",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Warning Aggregator",
+        "description": "What do you want to add?",
+        "menu_options": {
+          "monitored_entity": "Monitored entity — watch one entity and flag when it goes bad",
+          "aggregator": "Aggregator — roll a set of labelled entities into one warning"
+        }
+      },
+      "monitored_entity": {
+        "title": "Monitored entity",
+        "description": "Pick the entity to watch. The next step adapts to whether it is a switch/toggle, a number or text.",
+        "data": {
+          "entity_id": "Entity to watch",
+          "name": "Name",
+          "labels": "Labels"
+        },
+        "data_description": {
+          "name": "Defaults to the entity's name with \" status\" appended.",
+          "labels": "Applied to the new sensor so an Aggregator can pick it up."
+        }
+      },
+      "configure_check": {
+        "title": "When is {entity} a problem?",
+        "description": "Detected as a {kind} value (currently: {value}).",
+        "data": {
+          "bad_state": "Problem when the state is",
+          "threshold": "Threshold",
+          "direction": "Problem when the value is",
+          "hysteresis": "Hysteresis (deadband around the threshold)",
+          "match_text": "Text to match",
+          "comparison": "Comparison",
+          "match_mode": "A match means",
+          "unavailable_is": "When there is no value (unavailable / unknown / null)"
+        },
+        "data_description": {
+          "hysteresis": "Optional. The value must move this far past the threshold to clear a problem, to stop flapping.",
+          "match_text": "Compared case-insensitively."
+        }
+      },
+      "aggregator": {
+        "title": "Aggregator",
+        "description": "One problem sensor that turns on whenever a labelled entity is in a problem state.",
+        "data": {
+          "name": "Name",
+          "labels": "Labels to watch",
+          "match": "Label matching",
+          "problem_states": "States treated as a problem"
+        },
+        "data_description": {
+          "labels": "Every entity carrying one of these labels is watched.",
+          "match": "\"any\" watches entities in any selected label; \"all\" only watches entities carrying every selected label.",
+          "problem_states": "Turns on when a watched entity's state is one of these. Monitored-entity sensors (device class \"problem\") are always included."
+        }
+      }
+    },
+    "error": {
+      "name_required": "A name is required.",
+      "labels_required": "Select at least one label to watch."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Edit",
+        "description": "{entity} — detected as a {kind} value (currently: {value}).",
+        "data": {
+          "bad_state": "Problem when the state is",
+          "threshold": "Threshold",
+          "direction": "Problem when the value is",
+          "hysteresis": "Hysteresis (deadband around the threshold)",
+          "match_text": "Text to match",
+          "comparison": "Comparison",
+          "match_mode": "A match means",
+          "unavailable_is": "When there is no value (unavailable / unknown / null)",
+          "labels": "Labels to watch",
+          "match": "Label matching",
+          "problem_states": "States treated as a problem"
+        }
+      }
+    },
+    "error": {
+      "labels_required": "Select at least one label to watch."
+    }
+  },
+  "selector": {
+    "match": {
+      "options": {
+        "any": "Any label (union)",
+        "all": "All labels (intersection)"
+      }
+    },
+    "bad_state": {
+      "options": {
+        "on": "on",
+        "off": "off"
+      }
+    },
+    "direction": {
+      "options": {
+        "below": "below the threshold",
+        "above": "above the threshold"
+      }
+    },
+    "comparison": {
+      "options": {
+        "equals": "equals the text",
+        "contains": "contains the text"
+      }
+    },
+    "match_mode": {
+      "options": {
+        "match_is_bad": "a problem",
+        "match_is_good": "OK (anything else is a problem)"
+      }
+    },
+    "unavailable_is": {
+      "options": {
+        "problem": "treat as a problem",
+        "ok": "treat as OK"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "problem_count": {
+        "name": "Problem count"
+      }
+    }
+  }
+}

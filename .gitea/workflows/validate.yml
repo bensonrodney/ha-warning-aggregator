@@ -1,0 +1,30 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "23 4 * * 1"
+
+jobs:
+  hassfest:
+    name: hassfest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: home-assistant/actions/hassfest@master
+
+  hacs:
+    name: HACS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hacs/action@main
+        with:
+          category: integration
+          # `brands` needs the domain registered in home-assistant/brands;
+          # `topics`/`description` read the GitHub repo metadata via the GitHub
+          # API, which isn't reachable from Gitea. Drop them from this list once
+          # the repo is on GitHub with a description and topics set.
+          ignore: brands topics description

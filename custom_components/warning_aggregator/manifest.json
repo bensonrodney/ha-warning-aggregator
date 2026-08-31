@@ -1,0 +1,13 @@
+{
+  "domain": "warning_aggregator",
+  "name": "Warning Aggregator",
+  "after_dependencies": ["frontend", "http"],
+  "codeowners": ["@bensonrodney"],
+  "config_flow": true,
+  "documentation": "https://github.com/bensonrodney/ha-warning-aggregator",
+  "integration_type": "helper",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/bensonrodney/ha-warning-aggregator/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
