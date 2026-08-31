@@ -25,5 +25,8 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
-          # Drop `brands` once the domain is merged into home-assistant/brands.
-          ignore: brands
+          # `topics` just checks the repo's GitHub "About" topics are set — add
+          # some (home-assistant, hacs, home-assistant-integration, …) and drop
+          # this line. The other 7 checks (description, license, issues,
+          # information, hacsjson, integration_manifest, archived) run.
+          ignore: topics
