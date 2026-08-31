@@ -20,11 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: hacs/action@main
-        with:
-          category: integration
-          # `brands` needs the domain registered in home-assistant/brands;
-          # `topics`/`description` read the GitHub repo metadata via the GitHub
-          # API, which isn't reachable from Gitea. Drop them from this list once
-          # the repo is on GitHub with a description and topics set.
-          ignore: brands topics description
+      # The full hacs/action needs the GitHub API (repo description/topics/issues)
+      # and home-assistant/brands, none of which a Gitea runner can reach, so it
+      # only ever fails here. This runs the file-only HACS checks; the real
+      # action runs in .github/workflows/validate.yml once the repo is on GitHub.
+      - run: python3 scripts/hacs_check.py
