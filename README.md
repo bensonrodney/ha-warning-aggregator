@@ -25,12 +25,6 @@ UI-configured helpers and a Lovelace card.
   labelled entity into a single `problem` sensor that knows *which* entities are
   tripped.
 
-<!-- Screenshots: add PNGs under docs/images/ and uncomment.
-![The create-helper menu](docs/images/menu.png)
-![The adaptive check form](docs/images/monitored-entity-numeric.png)
-![The card](docs/images/card-problem.png)
--->
-
 ## Platforms
 
 | Platform | What you get |
@@ -60,51 +54,95 @@ Copy `custom_components/warning_aggregator/` from the
 [latest release][releases] into `<config>/custom_components/` and restart Home
 Assistant.
 
-## Configuration
+## Usage
 
-Everything is configured in the UI — there is nothing to add to
-`configuration.yaml`.
+Everything is done in the UI — nothing goes in `configuration.yaml`. The flow is:
+create an **aggregator**, feed it by **monitoring entities** (labelled so the
+aggregator picks them up), then put the **card** on a dashboard.
 
-**Settings → Devices & Services → Helpers → ➕ Create Helper → Warning
-Aggregator**, then choose a helper type.
+### 1. Create an aggregator
 
-### Monitored entity
+An aggregator is the single sensor you'll actually watch. It rolls up every
+entity that carries a label you choose.
 
-Pick the entity to watch. The next step depends on what that entity is:
+1. **Make a label** (skip if you have one): **Settings → Areas, labels & zones →
+   Labels → Add label**. Call it e.g. `Monitored`.
+2. **Settings → Devices & Services → Helpers → ➕ Create Helper → Warning
+   Aggregator**.
+3. Choose **Aggregator**.
+4. Fill in the form and **Submit**:
 
-| Entity is… | You choose |
-| --- | --- |
-| a switch / toggle / `binary_sensor` | which state — `on` or `off` — is the problem |
-| a number | a **threshold**, whether **below** or **above** it is the problem, and an optional **hysteresis** (deadband so it doesn't flap around the threshold) |
-| text | a string to **match** (case-insensitive), **equals** vs **contains**, and whether a match means **a problem** or **OK** (anything else being the problem) |
-| _any of the above_ | what an **unavailable / unknown / null** value means — **a problem** (default) or **OK** |
+   | Field | Set it to |
+   | --- | --- |
+   | **Name** | e.g. `House status` — you get `binary_sensor.house_status` and `sensor.house_status_problem_count` |
+   | **Labels to watch** | `Monitored` |
+   | **Label matching** | *Any label* — watch entities in any selected label (*All* = only entities carrying every one) |
+   | **States treated as a problem** | leave as `warning` — Monitored-entity sensors are always counted regardless |
 
-The result is one `binary_sensor` with device class `problem` (`on` = something is
-wrong) and a `reason` attribute that explains the current verdict, e.g.
-`12 is below 20` or `'error' matches 'Error'`.
+<img src="docs/images/create-aggregator.png" alt="Create Helper → Warning Aggregator menu and the Aggregator form" width="720">
 
-You can assign **labels** in the same step so an Aggregator picks the sensor up.
+`binary_sensor.house_status` is now created. It stays **off** until a monitored
+entity trips. To change any of this later: **Helpers →** click the helper **→ the
+cog icon**.
 
-> To watch a *different* entity, remove the helper and add a new one — the
-> **Configure** button only re-tunes the thresholds for the entity you chose.
+Only labels applied **directly** to an entity count — not labels inherited from
+its device or area.
 
-### Aggregator
+### 2. Monitor an entity
 
-| Option | Meaning |
-| --- | --- |
-| **Labels to watch** | Every entity carrying one of these labels is watched. |
-| **Label matching** | `any` — entities in *any* selected label (union). `all` — only entities carrying *every* selected label (intersection). |
-| **States treated as a problem** | The sensor is `on` when a watched entity's state is one of these (default: `warning`). `problem`-class binary sensors that are `on` — including every **Monitored entity** helper — always count, with no configuration. |
+Do this once per thing you care about — a battery level, a UPS "battery needs
+replacing" sensor, printer toner, a vacuum error code, a temperature that keeps
+dropping out…
 
-Only labels applied **directly** to an entity are considered; labels inherited
-from a device or area are not (see [Roadmap](#roadmap)).
+1. **Settings → Devices & Services → Helpers → ➕ Create Helper → Warning
+   Aggregator**.
+2. Choose **Monitored entity**.
+3. Set **Entity to watch**, optionally a **Name**, and add the **`Monitored`**
+   label (so the aggregator from step 1 picks it up). **Submit**.
+4. The next form adapts to what that entity is — fill it in and **Submit**:
 
-## The Lovelace card
+   | If the entity is… | The form asks |
+   | --- | --- |
+   | a switch / toggle / `binary_sensor` | **Problem when the state is** → `on` or `off` |
+   | a number | **Threshold**, **Problem when the value is** `below` / `above`, and an optional **Hysteresis** (deadband so it doesn't flap around the threshold) |
+   | text | **Text to match** (case-insensitive), **Comparison** `equals` / `contains`, and **A match means** `a problem` or `OK` (anything else being the problem) |
+   | *any of the above* | **When there is no value** (unavailable / unknown / null) → *treat as a problem* (default) or *treat as OK* |
 
-The integration serves `custom:warning-aggregator-card` and loads it on the
-frontend automatically. Edit a dashboard → **➕ Add card** → **Warning
-Aggregator**. It shows a green *"All Sensors OK"*, or a warning header with a
-tap-through list of the monitors that are not OK.
+<img src="docs/images/monitor-entity.png" alt="Monitored entity: the entity picker and the adaptive check form for a numeric entity" width="720">
+
+You get `binary_sensor.<name>` (device class **Problem**) — `on` when the check
+fails — with a **`reason`** attribute explaining the verdict (`12 is below 20`,
+`'error' matches 'Error'`). Because you labelled it, `binary_sensor.house_status`
+now counts it.
+
+The cog icon re-tunes the thresholds. To watch a *different* entity, delete the
+helper and make a new one.
+
+> You can also skip the wrapper: put the `Monitored` label straight onto any
+> native `problem` binary_sensor and the aggregator will include it.
+
+### 3. Add the card to a dashboard
+
+The card registers itself once you have at least one helper — no resource to add.
+
+1. Open the dashboard → **✏️ (Edit dashboard)** top-right → **➕ Add card**.
+2. Search for **Warning Aggregator** (it's under *Custom*). If it's missing,
+   hard-refresh the browser (**Ctrl/Cmd-Shift-R**).
+3. In the card editor set **Aggregator sensor** to `binary_sensor.house_status`.
+   Optionally change the title, the "all OK" text, or tick *hide when everything
+   is OK*.
+4. **Save**.
+
+Green **"All Sensors OK"** when nothing is wrong; otherwise a warning header with
+the count and a tap-through list of the tripped monitors (tap a row for its
+more-info dialog).
+
+<p>
+  <img src="docs/images/card-ok.png" alt="Card: all sensors OK" width="330">
+  <img src="docs/images/card-problem.png" alt="Card: two sensors need attention, listed" width="330">
+</p>
+
+<details><summary>YAML / all card options</summary>
 
 ```yaml
 type: custom:warning-aggregator-card
@@ -115,25 +153,20 @@ entity: binary_sensor.house_status
 # hide_when_ok: false                  # optional — render nothing while all OK
 ```
 
-The card also has a **label mode** that builds the list itself from an entity
-label, so it works even without an Aggregator sensor (or against the plain
-[template-helper pattern][pattern]):
+**Label mode** — build the list from a label instead of an aggregator sensor
+(works with the plain [template-helper pattern][pattern], no integration entity
+needed):
 
 ```yaml
 type: custom:warning-aggregator-card
 label: monitored
 problem_states: [warning]   # states counted as a problem (default: [warning])
 ```
+</details>
 
-## Recommended setup
+### Get notified
 
-1. Add a **Monitored entity** for each thing you care about — battery levels, a
-   UPS "replace battery" sensor, printer toner, a vacuum error code, a
-   temperature that stopped reporting…
-2. Give them all one shared label, e.g. `monitored`.
-3. Add one **Aggregator** watching that label.
-4. Put the card on a dashboard, and hang a single notification automation off the
-   aggregator:
+One automation, off the aggregator, naming what tripped:
 
 ```yaml
 alias: Notify on house warning
