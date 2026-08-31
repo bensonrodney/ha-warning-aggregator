@@ -71,7 +71,10 @@ entity that carries a label you choose.
    Aggregator**.
 3. Choose **Aggregator**.
 
-   <img src="docs/images/wa-menu.png" alt="The Warning Aggregator helper-type menu: Monitored entity or Aggregator" width="560">
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="docs/images/wa-menu-dark.png">
+     <img src="docs/images/wa-menu.png" alt="The Warning Aggregator helper-type menu: Monitored entity or Aggregator" width="560">
+   </picture>
 
 4. Fill in the form and **Submit**:
 
@@ -82,7 +85,10 @@ entity that carries a label you choose.
    | **Label matching** | *Any label* — watch entities in any selected label (*All* = only entities carrying every one) |
    | **States treated as a problem** | leave as `warning` — Monitored-entity sensors are always counted regardless |
 
-<img src="docs/images/create-aggregator.png" alt="The Aggregator helper form" width="620">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/create-aggregator-dark.png">
+  <img src="docs/images/create-aggregator.png" alt="The Aggregator helper form" width="620">
+</picture>
 
 `binary_sensor.house_status` is now created. It stays **off** until a monitored
 entity trips. To change any of this later: **Helpers →** click the helper **→ the
@@ -111,7 +117,10 @@ dropping out…
    | text | **Text to match** (case-insensitive), **Comparison** `equals` / `contains`, and **A match means** `a problem` or `OK` (anything else being the problem) |
    | *any of the above* | **When there is no value** (unavailable / unknown / null) → *treat as a problem* (default) or *treat as OK* |
 
-<img src="docs/images/monitor-entity.png" alt="The adaptive check form for a numeric entity" width="620">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/monitor-entity-dark.png">
+  <img src="docs/images/monitor-entity.png" alt="The adaptive check form for a numeric entity" width="620">
+</picture>
 
 You get `binary_sensor.<name>` (device class **Problem**) — `on` when the check
 fails — with a **`reason`** attribute explaining the verdict (`12 is below 20`,
@@ -141,8 +150,14 @@ the count and a tap-through list of the tripped monitors (tap a row for its
 more-info dialog).
 
 <p>
-  <img src="docs/images/card-ok.png" alt="Card: all sensors OK" width="330">
-  <img src="docs/images/card-problem.png" alt="Card: two sensors need attention, listed" width="330">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/card-ok-dark.png">
+    <img src="docs/images/card-ok.png" alt="Card: all sensors OK" width="330">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/card-problem-dark.png">
+    <img src="docs/images/card-problem.png" alt="Card: two sensors need attention, listed" width="330">
+  </picture>
 </p>
 
 <details><summary>YAML / all card options</summary>

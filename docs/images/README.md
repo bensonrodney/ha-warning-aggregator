@@ -3,6 +3,9 @@
 Used by the root `README.md` "Usage" section. Captured from a real Home
 Assistant with `brands/../` on a sandbox instance (Playwright).
 
+Each has a `-dark.png` twin; the README swaps them with `<picture>` +
+`prefers-color-scheme`.
+
 | File | Shows |
 | --- | --- |
 | `wa-menu.png` | the **Warning Aggregator** helper-type menu (Monitored entity / Aggregator) |
