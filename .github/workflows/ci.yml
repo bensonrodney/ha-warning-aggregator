@@ -5,6 +5,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
 
 env:
@@ -33,3 +34,22 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - run: uv run --python 3.13 --with-requirements requirements_test.txt pytest
+
+  # Runs only for `vX.Y.Z` tags (from `make release`), once lint + tests pass.
+  # GitHub is the source of truth for released versions.
+  release:
+    name: release
+    needs: [lint, test]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/bump_version.py --check "${{ github.ref_name }}"
+      - run: python3 scripts/build_zip.py
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: warning_aggregator.zip
+          generate_release_notes: true

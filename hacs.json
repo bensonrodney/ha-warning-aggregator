@@ -2,5 +2,7 @@
   "name": "Warning Aggregator",
   "content_in_root": false,
   "render_readme": true,
-  "homeassistant": "2025.1.0"
+  "homeassistant": "2025.1.0",
+  "zip_release": true,
+  "filename": "warning_aggregator.zip"
 }

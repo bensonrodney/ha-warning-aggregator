@@ -14,6 +14,9 @@ env/
 .ruff_cache/
 .mypy_cache/
 uv.lock
+
+# Release artifact (built in CI)
+/warning_aggregator.zip
 .coverage
 coverage.xml
 htmlcov/

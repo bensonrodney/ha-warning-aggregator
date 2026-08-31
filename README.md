@@ -194,15 +194,39 @@ Yes — add as many as you like, each with its own labels, sensor and card.
 
 ## Contributing
 
-Issues and PRs welcome. To run the checks locally:
+Issues and PRs welcome.
 
 ```bash
-uv run --with pytest-homeassistant-custom-component --with home-assistant-frontend pytest
-uvx ruff check . && uvx ruff format --check .
+make test           # pytest (uv fetches Python 3.13 + test deps)
+make lint           # ruff check + format --check
+make hacs           # offline HACS checks
+make version        # print the current version
 ```
 
 `scripts/deploy-sandbox.sh` deploys the working tree into a local Docker Home
 Assistant for manual testing.
+
+### Releasing
+
+The version lives in one place — `custom_components/warning_aggregator/manifest.json`
+(the card's banner is kept in sync). To cut a release:
+
+```bash
+make release              # 0.1.0 -> 0.1.1
+make release BUMP=minor   # 0.1.0 -> 0.2.0
+make release SET=1.0.0
+```
+
+That bumps the version, commits `Release vX.Y.Z`, tags it, and pushes to **every**
+git remote. The `release` job in `ci.yml` then — once lint and tests pass —
+verifies the tag matches `manifest.json`, builds `warning_aggregator.zip`
+(what `hacs.json`'s `zip_release` points at), and publishes the release:
+a **GitHub Release** on GitHub (the source of truth for versions) and a mirrored
+**Gitea Release** on Gitea.
+
+The Gitea release job needs a repo secret **`GITEA_TOKEN`** with release write
+access (*Settings → Actions → Secrets*). HACS installs nothing until the first
+release exists.
 
 ## Credits
 
