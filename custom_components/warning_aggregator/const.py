@@ -41,9 +41,19 @@ ATTR_MATCH: Final = "match"
 CONF_KIND: Final = "kind"
 CONF_UNAVAILABLE_IS: Final = "unavailable_is"
 
+# Entity-ID prefix for the per-monitor binary sensors so they group together in
+# the entity list and pickers, e.g. `binary_sensor.warn_agg_ups_battery`. Only
+# the initial entity_id is seeded — renaming one afterwards still works.
+ENTITY_ID_PREFIX: Final = "warn_agg_"
+
 KIND_BOOLEAN: Final = "boolean"
 KIND_NUMERIC: Final = "numeric"
 KIND_STRING: Final = "string"
+KIND_TEMPLATE: Final = "template"
+
+# template check
+CONF_VALUE_TEMPLATE: Final = "value_template"
+CONF_REASON_TEMPLATE: Final = "reason_template"
 
 UNAVAILABLE_PROBLEM: Final = "problem"
 UNAVAILABLE_OK: Final = "ok"

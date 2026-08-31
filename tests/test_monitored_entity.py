@@ -56,20 +56,42 @@ async def test_numeric_monitor_tracks_threshold(hass: HomeAssistant) -> None:
         },
     )
 
-    state = hass.states.get("binary_sensor.battery_status")
+    state = hass.states.get("binary_sensor.warn_agg_battery_status")
     assert state is not None
     assert state.state == "off"
     assert state.attributes["device_class"] == "problem"
 
     hass.states.async_set("sensor.battery", "12")
     await hass.async_block_till_done()
-    state = hass.states.get("binary_sensor.battery_status")
+    state = hass.states.get("binary_sensor.warn_agg_battery_status")
     assert state.state == "on"
     assert "12" in state.attributes["reason"]
 
     hass.states.async_set("sensor.battery", "unavailable")
     await hass.async_block_till_done()
-    assert hass.states.get("binary_sensor.battery_status").state == "on"
+    assert hass.states.get("binary_sensor.warn_agg_battery_status").state == "on"
+
+
+async def test_entity_id_is_prefixed(hass: HomeAssistant) -> None:
+    """Monitors get a `warn_agg_` entity_id so they group in the entity list."""
+    hass.states.async_set("sensor.battery", "55")
+    await _add(
+        hass,
+        "UPS Battery",
+        {
+            CONF_ENTITY_ID: "sensor.battery",
+            CONF_LABELS: [],
+            CONF_KIND: KIND_NUMERIC,
+            CONF_THRESHOLD: 20,
+            CONF_DIRECTION: DIRECTION_BELOW,
+            CONF_UNAVAILABLE_IS: UNAVAILABLE_PROBLEM,
+        },
+    )
+
+    state = hass.states.get("binary_sensor.warn_agg_ups_battery")
+    assert state is not None
+    # friendly name stays clean (prefix is only on the entity_id)
+    assert state.attributes["friendly_name"] == "UPS Battery"
 
 
 async def test_unavailable_can_be_treated_as_ok(hass: HomeAssistant) -> None:
@@ -85,11 +107,11 @@ async def test_unavailable_can_be_treated_as_ok(hass: HomeAssistant) -> None:
             CONF_UNAVAILABLE_IS: UNAVAILABLE_OK,
         },
     )
-    assert hass.states.get("binary_sensor.link_status").state == "off"
+    assert hass.states.get("binary_sensor.warn_agg_link_status").state == "off"
 
     hass.states.async_set("binary_sensor.link", "unavailable")
     await hass.async_block_till_done()
-    assert hass.states.get("binary_sensor.link_status").state == "off"
+    assert hass.states.get("binary_sensor.warn_agg_link_status").state == "off"
 
 
 async def test_labels_applied_and_aggregator_picks_it_up(hass: HomeAssistant) -> None:
@@ -112,7 +134,7 @@ async def test_labels_applied_and_aggregator_picks_it_up(hass: HomeAssistant) ->
     )
 
     registry = er.async_get(hass)
-    entity = registry.async_get("binary_sensor.battery_status")
+    entity = registry.async_get("binary_sensor.warn_agg_battery_status")
     assert entity is not None
     assert entity.labels == {monitored.label_id}
 
@@ -133,4 +155,6 @@ async def test_labels_applied_and_aggregator_picks_it_up(hass: HomeAssistant) ->
 
     state = hass.states.get("binary_sensor.system")
     assert state.state == "on"
-    assert state.attributes["problem_entities"] == ["binary_sensor.battery_status"]
+    assert state.attributes["problem_entities"] == [
+        "binary_sensor.warn_agg_battery_status"
+    ]

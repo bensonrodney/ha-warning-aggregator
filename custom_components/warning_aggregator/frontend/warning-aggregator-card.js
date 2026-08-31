@@ -89,7 +89,12 @@ class WarningAggregatorCard extends HTMLElement {
         id.startsWith("binary_sensor.") &&
         Array.isArray(hass.states[id].attributes.problem_entities),
     );
-    return { entity: match || "binary_sensor.system_warning" };
+    const entity = match || "binary_sensor.system_warning";
+    const config = { entity };
+    // Default the card title to the monitor's name; the user can clear it.
+    const name = hass.states[entity] && hass.states[entity].attributes.friendly_name;
+    if (name) config.title = name;
+    return config;
   }
 
   setConfig(config) {
@@ -278,8 +283,18 @@ class WarningAggregatorCardEditor extends HTMLElement {
           hide_when_ok: "Hide the card entirely when all OK",
         })[schema.name] || schema.name;
       this._form.addEventListener("value-changed", (ev) => {
+        const next = { ...ev.detail.value };
+        const prevEntity = this._config && this._config.entity;
+        // When the monitor changes, re-default the title to its name — even if
+        // that overwrites a custom title (better than a stale wrong name).
+        if (next.entity && next.entity !== prevEntity) {
+          const st = this._hass && this._hass.states[next.entity];
+          const name = st && st.attributes.friendly_name;
+          if (name) next.title = name;
+        }
+        this._config = next;
         this.dispatchEvent(
-          new CustomEvent("config-changed", { detail: { config: ev.detail.value } }),
+          new CustomEvent("config-changed", { detail: { config: next } }),
         );
       });
       this.appendChild(this._form);

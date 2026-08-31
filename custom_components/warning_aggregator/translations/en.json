@@ -7,6 +7,7 @@
         "description": "What do you want to add?",
         "menu_options": {
           "monitored_entity": "Monitored entity — watch one entity and flag when it goes bad",
+          "template": "Template check — a Jinja template decides good / not good",
           "aggregator": "Aggregator — roll a set of labelled entities into one warning"
         }
       },
@@ -39,6 +40,21 @@
         "data_description": {
           "hysteresis": "Optional. The value must move this far past the threshold to clear a problem, to stop flapping.",
           "match_text": "Compared case-insensitively."
+        }
+      },
+      "template": {
+        "title": "Template check",
+        "description": "The check is a Jinja template. It's a problem when the template renders truthy (true / \"on\" / a non-empty string); OK when it renders false / \"\" / \"off\".",
+        "data": {
+          "name": "Name",
+          "labels": "Labels",
+          "value_template": "Problem template",
+          "reason_template": "Reason template (optional)",
+          "unavailable_is": "When the template errors or renders nothing"
+        },
+        "data_description": {
+          "labels": "Applied to the new sensor so an Aggregator can pick it up.",
+          "reason_template": "Rendered into the sensor's `reason` attribute and the card's list."
         }
       },
       "aggregator": {
@@ -74,7 +90,7 @@
       },
       "retune": {
         "title": "Edit monitored entity",
-        "description": "{entity} — detected as a {kind} value (currently: {value}).",
+        "description": "{entity} — {kind} check (currently: {value}).",
         "data": {
           "bad_state": "Problem when the state is",
           "threshold": "Threshold",
@@ -83,7 +99,9 @@
           "match_text": "Text to match",
           "comparison": "Comparison",
           "match_mode": "A match means",
-          "unavailable_is": "When there is no value (unavailable / unknown / null)"
+          "value_template": "Problem template",
+          "reason_template": "Reason template (optional)",
+          "unavailable_is": "When there is no value (unavailable / unknown / null / template error)"
         }
       }
     },

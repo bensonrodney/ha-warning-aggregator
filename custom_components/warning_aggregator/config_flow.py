@@ -1,9 +1,11 @@
 """Config and options flow for Warning Aggregator.
 
-The integration ships two helper types:
+Helper types offered by the menu:
 
 * **monitored_entity** - watch one entity; the flow adapts to whether it is
   boolean, numeric or text and asks only the relevant questions.
+* **template** - a monitored_entity whose check is a Jinja template (the
+  escape hatch when the built-in kinds don't fit).
 * **aggregator** - roll a set of labelled entities up into one problem sensor.
 """
 
@@ -37,8 +39,10 @@ from .const import (
     CONF_MATCH_MODE,
     CONF_MATCH_TEXT,
     CONF_PROBLEM_STATES,
+    CONF_REASON_TEMPLATE,
     CONF_THRESHOLD,
     CONF_UNAVAILABLE_IS,
+    CONF_VALUE_TEMPLATE,
     DEFAULT_MATCH,
     DEFAULT_PROBLEM_STATES,
     DIRECTION_BELOW,
@@ -48,6 +52,7 @@ from .const import (
     HELPER_MONITORED_ENTITY,
     KIND_BOOLEAN,
     KIND_NUMERIC,
+    KIND_TEMPLATE,
     MATCH_IS_BAD,
     MATCH_MODE_OPTIONS,
     MATCH_OPTIONS,
@@ -101,7 +106,10 @@ def _kind_schema(kind: str, current_value: str | None) -> vol.Schema:
     """The per-kind question set, plus the shared 'no value' choice."""
     fields: dict[Any, Any] = {}
 
-    if kind == KIND_BOOLEAN:
+    if kind == KIND_TEMPLATE:
+        fields[vol.Required(CONF_VALUE_TEMPLATE)] = selector.TemplateSelector()
+        fields[vol.Optional(CONF_REASON_TEMPLATE)] = selector.TemplateSelector()
+    elif kind == KIND_BOOLEAN:
         fields[vol.Required(CONF_BAD_STATE, default="on")] = _select(
             BAD_STATE_OPTIONS, "bad_state"
         )
@@ -164,10 +172,10 @@ class WarningAggregatorConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Offer the two helper types."""
+        """Offer the helper types."""
         return self.async_show_menu(
             step_id="user",
-            menu_options=[HELPER_MONITORED_ENTITY, HELPER_AGGREGATOR],
+            menu_options=[HELPER_MONITORED_ENTITY, KIND_TEMPLATE, HELPER_AGGREGATOR],
         )
 
     # -- monitored entity ------------------------------------------------
@@ -223,6 +231,45 @@ class WarningAggregatorConfigFlow(ConfigFlow, domain=DOMAIN):
                 "kind": kind,
                 "value": state.state if state else "unavailable",
             },
+        )
+
+    # -- template check ------------------------------------------------
+
+    async def async_step_template(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """A monitored entity whose check is a Jinja template."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            name = (user_input.get(CONF_NAME) or "").strip()
+            if not name:
+                errors[CONF_NAME] = "name_required"
+            else:
+                data = {
+                    CONF_HELPER_TYPE: HELPER_MONITORED_ENTITY,
+                    CONF_KIND: KIND_TEMPLATE,
+                    CONF_NAME: name,
+                    CONF_LABELS: user_input.get(CONF_LABELS, []),
+                    CONF_VALUE_TEMPLATE: user_input[CONF_VALUE_TEMPLATE],
+                    CONF_UNAVAILABLE_IS: user_input[CONF_UNAVAILABLE_IS],
+                }
+                if reason := user_input.get(CONF_REASON_TEMPLATE):
+                    data[CONF_REASON_TEMPLATE] = reason
+                return self.async_create_entry(title=name, data=data)
+
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_NAME): selector.TextSelector(),
+                vol.Optional(CONF_LABELS, default=[]): selector.LabelSelector(
+                    selector.LabelSelectorConfig(multiple=True)
+                ),
+            }
+        ).extend(_kind_schema(KIND_TEMPLATE, None).schema)
+        return self.async_show_form(
+            step_id="template",
+            data_schema=self.add_suggested_values_to_schema(schema, user_input or {}),
+            errors=errors,
         )
 
     # -- aggregator ----------------------------------------------------
@@ -309,15 +356,16 @@ class MonitoredEntityOptionsFlow(OptionsFlow):
 
         current = {**self.config_entry.data, **self.config_entry.options}
         kind = current[CONF_KIND]
-        state = self.hass.states.get(current[CONF_ENTITY_ID])
+        watched = current.get(CONF_ENTITY_ID)
+        state = self.hass.states.get(watched) if watched else None
         return self.async_show_form(
             step_id="retune",
             data_schema=self.add_suggested_values_to_schema(
                 _kind_schema(kind, state.state if state else None), current
             ),
             description_placeholders={
-                "entity": current[CONF_ENTITY_ID],
+                "entity": watched or "a template",
                 "kind": kind,
-                "value": state.state if state else "unavailable",
+                "value": state.state if state else "n/a",
             },
         )
