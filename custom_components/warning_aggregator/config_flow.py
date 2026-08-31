@@ -299,6 +299,11 @@ class MonitoredEntityOptionsFlow(OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
+        return await self.async_step_retune(user_input)
+
+    async def async_step_retune(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         if user_input is not None:
             return self.async_create_entry(data=user_input)
 
@@ -306,7 +311,7 @@ class MonitoredEntityOptionsFlow(OptionsFlow):
         kind = current[CONF_KIND]
         state = self.hass.states.get(current[CONF_ENTITY_ID])
         return self.async_show_form(
-            step_id="init",
+            step_id="retune",
             data_schema=self.add_suggested_values_to_schema(
                 _kind_schema(kind, state.state if state else None), current
             ),

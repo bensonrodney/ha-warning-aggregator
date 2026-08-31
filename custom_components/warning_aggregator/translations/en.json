@@ -65,7 +65,15 @@
   "options": {
     "step": {
       "init": {
-        "title": "Edit",
+        "title": "Edit aggregator",
+        "data": {
+          "labels": "Labels to watch",
+          "match": "Label matching",
+          "problem_states": "States treated as a problem"
+        }
+      },
+      "retune": {
+        "title": "Edit monitored entity",
         "description": "{entity} — detected as a {kind} value (currently: {value}).",
         "data": {
           "bad_state": "Problem when the state is",
@@ -75,10 +83,7 @@
           "match_text": "Text to match",
           "comparison": "Comparison",
           "match_mode": "A match means",
-          "unavailable_is": "When there is no value (unavailable / unknown / null)",
-          "labels": "Labels to watch",
-          "match": "Label matching",
-          "problem_states": "States treated as a problem"
+          "unavailable_is": "When there is no value (unavailable / unknown / null)"
         }
       }
     },
