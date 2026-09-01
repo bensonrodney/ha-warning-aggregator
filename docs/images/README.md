@@ -23,9 +23,9 @@ capturing, downscale to **≈560 px wide** for the dialog shots and **≈400 px*
 for the card shots:
 
 ```python
-from PIL import Image
-im = Image.open(path); w = 560
-im.resize((w, round(im.height * w / im.width)), Image.LANCZOS).save(path, optimize=True)
+w = 560
+im = Image.open(path)
+im.resize((w, round(im.height * w / im.width)), Image.LANCZOS).save(path)
 ```
 
 | File | Shows |
