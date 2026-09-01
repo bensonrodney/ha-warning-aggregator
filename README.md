@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="brands/custom_integrations/warning_aggregator/logo.png" alt="Warning Aggregator" width="220">
+  <img src="https://raw.githubusercontent.com/bensonrodney/ha-warning-aggregator/main/brands/custom_integrations/warning_aggregator/logo.png" alt="Warning Aggregator" width="220">
 </p>
 
 # Warning Aggregator
@@ -74,7 +74,7 @@ entity that carries a label you choose.
    Aggregator**.
 3. Choose **Aggregator**.
 
-   <img src="docs/images/wa-menu.png" alt="The Warning Aggregator helper-type menu: Monitored entity, Template check or Aggregator" width="560">
+   <img src="https://raw.githubusercontent.com/bensonrodney/ha-warning-aggregator/main/docs/images/wa-menu.png" alt="The Warning Aggregator helper-type menu: Monitored entity, Template check or Aggregator" width="560">
 
 4. Fill in the form and **Submit**:
 
@@ -85,7 +85,7 @@ entity that carries a label you choose.
    | **Label matching** | *Any label* — watch entities in any selected label (*All* = only entities carrying every one) |
    | **States treated as a problem** | leave as `warning` — Monitored-entity sensors are always counted regardless |
 
-<img src="docs/images/create-aggregator.png" alt="The Aggregator helper form" width="620">
+<img src="https://raw.githubusercontent.com/bensonrodney/ha-warning-aggregator/main/docs/images/create-aggregator.png" alt="The Aggregator helper form" width="620">
 
 `binary_sensor.house_status` is now created. It stays **off** until a monitored
 entity trips. To change any of this later: **Helpers →** click the helper **→ the
@@ -114,7 +114,7 @@ dropping out…
    | text | **Text to match** (case-insensitive), **Comparison** `equals` / `contains`, and **A match means** `a problem` or `OK` (anything else being the problem) |
    | *any of the above* | **When there is no value** (unavailable / unknown / null) → *treat as a problem* (default) or *treat as OK* |
 
-<img src="docs/images/monitor-entity.png" alt="Picking a threshold or a range for a numeric monitor" width="560">
+<img src="https://raw.githubusercontent.com/bensonrodney/ha-warning-aggregator/main/docs/images/monitor-entity.png" alt="Picking a threshold or a range for a numeric monitor" width="560">
 
 You get `binary_sensor.warn_agg_<name>` (device class **Problem**) — `on` when the
 check fails — with a **`reason`** attribute explaining the verdict (`12 is below
@@ -136,7 +136,7 @@ When the adaptive form can't express the rule — comparing two entities, a time
 window, "any of these three" — choose **Template check** from the same menu
 instead of *Monitored entity*.
 
-<img src="docs/images/monitor-template.png" alt="The Template check form" width="620">
+<img src="https://raw.githubusercontent.com/bensonrodney/ha-warning-aggregator/main/docs/images/monitor-template.png" alt="The Template check form" width="620">
 
 - **Problem template** — a problem when it renders truthy (`true`, `"on"`, a
   non-empty string); OK when it renders `false` / `""` / `"off"`. Same rule as a
@@ -173,8 +173,8 @@ the count and a tap-through list of the tripped monitors (tap a row for its
 more-info dialog).
 
 <p>
-  <img src="docs/images/card-ok.png" alt="Card: all sensors OK" width="330">
-  <img src="docs/images/card-problem.png" alt="Card: two sensors need attention, listed" width="330">
+  <img src="https://raw.githubusercontent.com/bensonrodney/ha-warning-aggregator/main/docs/images/card-ok.png" alt="Card: all sensors OK" width="330">
+  <img src="https://raw.githubusercontent.com/bensonrodney/ha-warning-aggregator/main/docs/images/card-problem.png" alt="Card: two sensors need attention, listed" width="330">
 </p>
 
 <details><summary>YAML / all card options</summary>
