@@ -13,10 +13,14 @@ from custom_components.warning_aggregator.const import (
     CONF_HYSTERESIS,
     CONF_MATCH_MODE,
     CONF_MATCH_TEXT,
+    CONF_RANGE_HIGH,
+    CONF_RANGE_LOW,
     CONF_THRESHOLD,
     CONF_UNAVAILABLE_IS,
     DIRECTION_ABOVE,
     DIRECTION_BELOW,
+    DIRECTION_INSIDE,
+    DIRECTION_OUTSIDE,
     KIND_BOOLEAN,
     KIND_NUMERIC,
     KIND_STRING,
@@ -121,6 +125,67 @@ def test_numeric_hysteresis_holds_until_clear_of_the_band():
         ).problem
         is False
     )
+
+
+def test_numeric_outside_range_is_bad():
+    params = {
+        CONF_DIRECTION: DIRECTION_OUTSIDE,
+        CONF_RANGE_LOW: 18,
+        CONF_RANGE_HIGH: 24,
+        CONF_HYSTERESIS: 0,
+        CONF_UNAVAILABLE_IS: UNAVAILABLE_PROBLEM,
+    }
+    assert evaluate(KIND_NUMERIC, params, State("sensor.t", "21")).problem is False
+    assert evaluate(KIND_NUMERIC, params, State("sensor.t", "15")).problem is True
+    assert evaluate(KIND_NUMERIC, params, State("sensor.t", "30")).problem is True
+    r = evaluate(KIND_NUMERIC, params, State("sensor.t", "30"))
+    assert "outside 18 to 24" in r.reason
+
+
+def test_numeric_inside_range_is_bad():
+    params = {
+        CONF_DIRECTION: DIRECTION_INSIDE,
+        CONF_RANGE_LOW: 40,
+        CONF_RANGE_HIGH: 60,
+        CONF_HYSTERESIS: 0,
+        CONF_UNAVAILABLE_IS: UNAVAILABLE_PROBLEM,
+    }
+    assert evaluate(KIND_NUMERIC, params, State("sensor.h", "50")).problem is True
+    assert evaluate(KIND_NUMERIC, params, State("sensor.h", "70")).problem is False
+
+
+def test_numeric_range_bounds_swapped_are_fine():
+    params = {
+        CONF_DIRECTION: DIRECTION_OUTSIDE,
+        CONF_RANGE_LOW: 24,
+        CONF_RANGE_HIGH: 18,
+        CONF_HYSTERESIS: 0,
+        CONF_UNAVAILABLE_IS: UNAVAILABLE_PROBLEM,
+    }
+    assert evaluate(KIND_NUMERIC, params, State("sensor.t", "21")).problem is False
+    assert evaluate(KIND_NUMERIC, params, State("sensor.t", "10")).problem is True
+
+
+def test_numeric_range_hysteresis_deadband():
+    params = {
+        CONF_DIRECTION: DIRECTION_OUTSIDE,
+        CONF_RANGE_LOW: 18,
+        CONF_RANGE_HIGH: 24,
+        CONF_HYSTERESIS: 2,
+        CONF_UNAVAILABLE_IS: UNAVAILABLE_PROBLEM,
+    }
+
+    def verdict(val, currently_problem):
+        return evaluate(
+            KIND_NUMERIC, params, State("s.t", val), currently_problem=currently_problem
+        ).problem
+
+    # Not a problem yet: must clear the band by 2 to trip.
+    assert verdict("25", False) is False
+    assert verdict("27", False) is True
+    # Already a problem: stays tripped until back 2 inside the range.
+    assert verdict("23", True) is True
+    assert verdict("21", True) is False
 
 
 def test_numeric_non_numeric_value_uses_unavailable_rule():

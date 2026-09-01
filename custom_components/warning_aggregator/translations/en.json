@@ -29,17 +29,48 @@
         "description": "Detected as a {kind} value (currently: {value}).",
         "data": {
           "bad_state": "Problem when the state is",
-          "threshold": "Threshold",
-          "direction": "Problem when the value is",
-          "hysteresis": "Hysteresis (deadband around the threshold)",
           "match_text": "Text to match",
           "comparison": "Comparison",
           "match_mode": "A match means",
           "unavailable_is": "When there is no value (unavailable / unknown / null)"
         },
         "data_description": {
-          "hysteresis": "Optional. The value must move this far past the threshold to clear a problem, to stop flapping.",
           "match_text": "Compared case-insensitively."
+        }
+      },
+      "numeric_kind": {
+        "title": "Number monitor",
+        "description": "{entity} is a number (currently {value}). Pick one — a single threshold, or a range.",
+        "menu_options": {
+          "numeric_threshold": "A threshold — a problem below (or above) one value",
+          "numeric_range": "A range — a problem outside (or inside) a low–high band"
+        }
+      },
+      "numeric_threshold": {
+        "title": "{entity}: threshold",
+        "description": "Currently {value}.",
+        "data": {
+          "direction": "Problem when the value is",
+          "threshold": "Threshold",
+          "hysteresis": "Hysteresis (deadband)",
+          "unavailable_is": "When there is no value (unavailable / unknown / null)"
+        },
+        "data_description": {
+          "hysteresis": "Optional. The value must move this far past the threshold to flip the verdict, to stop flapping."
+        }
+      },
+      "numeric_range": {
+        "title": "{entity}: range",
+        "description": "Currently {value}. The bounds can be entered in either order.",
+        "data": {
+          "direction": "Problem when the value is",
+          "range_low": "Lower bound",
+          "range_high": "Upper bound",
+          "hysteresis": "Hysteresis (deadband)",
+          "unavailable_is": "When there is no value (unavailable / unknown / null)"
+        },
+        "data_description": {
+          "hysteresis": "Optional. The value must move this far past a bound to flip the verdict, to stop flapping."
         }
       },
       "template": {
@@ -75,7 +106,8 @@
     },
     "error": {
       "name_required": "A name is required.",
-      "labels_required": "Select at least one label to watch."
+      "labels_required": "Select at least one label to watch.",
+      "range_equal": "The lower and upper bounds must be different."
     }
   },
   "options": {
@@ -93,9 +125,6 @@
         "description": "{entity} — {kind} check (currently: {value}).",
         "data": {
           "bad_state": "Problem when the state is",
-          "threshold": "Threshold",
-          "direction": "Problem when the value is",
-          "hysteresis": "Hysteresis (deadband around the threshold)",
           "match_text": "Text to match",
           "comparison": "Comparison",
           "match_mode": "A match means",
@@ -103,10 +132,36 @@
           "reason_template": "Reason template (optional)",
           "unavailable_is": "When there is no value (unavailable / unknown / null / template error)"
         }
+      },
+      "retune_numeric_kind": {
+        "title": "Edit monitored entity",
+        "description": "{entity} (currently {value}). It's set as {current_mode} — pick that one to adjust its values, or the other to switch type."
+      },
+      "retune_threshold": {
+        "title": "Edit monitored entity",
+        "description": "{entity} — threshold check (currently {value}).",
+        "data": {
+          "direction": "Problem when the value is",
+          "threshold": "Threshold",
+          "hysteresis": "Hysteresis (deadband)",
+          "unavailable_is": "When there is no value (unavailable / unknown / null)"
+        }
+      },
+      "retune_range": {
+        "title": "Edit monitored entity",
+        "description": "{entity} — range check (currently {value}).",
+        "data": {
+          "direction": "Problem when the value is",
+          "range_low": "Lower bound",
+          "range_high": "Upper bound",
+          "hysteresis": "Hysteresis (deadband)",
+          "unavailable_is": "When there is no value (unavailable / unknown / null)"
+        }
       }
     },
     "error": {
-      "labels_required": "Select at least one label to watch."
+      "labels_required": "Select at least one label to watch.",
+      "range_equal": "The lower and upper bounds must be different."
     }
   },
   "selector": {
@@ -125,7 +180,9 @@
     "direction": {
       "options": {
         "below": "below the threshold",
-        "above": "above the threshold"
+        "above": "above the threshold",
+        "outside": "outside the range",
+        "inside": "inside the range"
       }
     },
     "comparison": {

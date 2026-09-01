@@ -67,9 +67,17 @@ BAD_STATE_OPTIONS: Final[list[str]] = ["on", "off"]
 CONF_THRESHOLD: Final = "threshold"
 CONF_DIRECTION: Final = "direction"
 CONF_HYSTERESIS: Final = "hysteresis"
+CONF_RANGE_LOW: Final = "range_low"
+CONF_RANGE_HIGH: Final = "range_high"
 DIRECTION_BELOW: Final = "below"
 DIRECTION_ABOVE: Final = "above"
-DIRECTION_OPTIONS: Final[list[str]] = [DIRECTION_BELOW, DIRECTION_ABOVE]
+DIRECTION_OUTSIDE: Final = "outside"
+DIRECTION_INSIDE: Final = "inside"
+# a number monitor is EITHER a single threshold OR a low/high range, never both
+DIRECTION_THRESHOLD_ORDER: Final[tuple[str, ...]] = (DIRECTION_BELOW, DIRECTION_ABOVE)
+DIRECTION_RANGE_ORDER: Final[tuple[str, ...]] = (DIRECTION_OUTSIDE, DIRECTION_INSIDE)
+DIRECTION_THRESHOLD: Final[frozenset[str]] = frozenset(DIRECTION_THRESHOLD_ORDER)
+DIRECTION_RANGE: Final[frozenset[str]] = frozenset(DIRECTION_RANGE_ORDER)
 
 # string
 CONF_MATCH_TEXT: Final = "match_text"

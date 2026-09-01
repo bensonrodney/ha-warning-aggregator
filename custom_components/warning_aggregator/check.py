@@ -20,9 +20,13 @@ from .const import (
     CONF_HYSTERESIS,
     CONF_MATCH_MODE,
     CONF_MATCH_TEXT,
+    CONF_RANGE_HIGH,
+    CONF_RANGE_LOW,
     CONF_THRESHOLD,
     CONF_UNAVAILABLE_IS,
     DIRECTION_BELOW,
+    DIRECTION_INSIDE,
+    DIRECTION_RANGE,
     KIND_BOOLEAN,
     KIND_NUMERIC,
     KIND_STRING,
@@ -106,8 +110,12 @@ def evaluate(
 def _evaluate_numeric(
     params: dict[str, Any], value: float, currently_problem: bool
 ) -> CheckResult:
-    threshold = float(params[CONF_THRESHOLD])
     hysteresis = abs(float(params.get(CONF_HYSTERESIS) or 0.0))
+
+    if params[CONF_DIRECTION] in DIRECTION_RANGE:
+        return _evaluate_range(params, value, currently_problem, hysteresis)
+
+    threshold = float(params[CONF_THRESHOLD])
     below = params[CONF_DIRECTION] == DIRECTION_BELOW
 
     if below:
@@ -120,6 +128,28 @@ def _evaluate_numeric(
         rel = "above" if bad else "at or below"
 
     return CheckResult(bad, f"{_fmt(value)} is {rel} {_fmt(threshold)}")
+
+
+def _evaluate_range(
+    params: dict[str, Any], value: float, currently_problem: bool, hysteresis: float
+) -> CheckResult:
+    low = float(params[CONF_RANGE_LOW])
+    high = float(params[CONF_RANGE_HIGH])
+    if low > high:
+        low, high = high, low
+
+    inside_is_bad = params[CONF_DIRECTION] == DIRECTION_INSIDE
+    # `currently_problem` tells us the verdict; work out where the value sits now
+    # so the deadband is applied to the boundary the value has to cross to flip.
+    currently_within = currently_problem if inside_is_bad else not currently_problem
+    if currently_within:
+        within = (low - hysteresis) <= value <= (high + hysteresis)
+    else:
+        within = (low + hysteresis) <= value <= (high - hysteresis)
+
+    bad = within if inside_is_bad else not within
+    where = "within" if low <= value <= high else "outside"
+    return CheckResult(bad, f"{_fmt(value)} is {where} {_fmt(low)} to {_fmt(high)}")
 
 
 def _evaluate_string(params: dict[str, Any], raw: str) -> CheckResult:

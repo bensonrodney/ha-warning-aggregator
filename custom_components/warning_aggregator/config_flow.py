@@ -39,6 +39,8 @@ from .const import (
     CONF_MATCH_MODE,
     CONF_MATCH_TEXT,
     CONF_PROBLEM_STATES,
+    CONF_RANGE_HIGH,
+    CONF_RANGE_LOW,
     CONF_REASON_TEMPLATE,
     CONF_THRESHOLD,
     CONF_UNAVAILABLE_IS,
@@ -46,7 +48,10 @@ from .const import (
     DEFAULT_MATCH,
     DEFAULT_PROBLEM_STATES,
     DIRECTION_BELOW,
-    DIRECTION_OPTIONS,
+    DIRECTION_OUTSIDE,
+    DIRECTION_RANGE,
+    DIRECTION_RANGE_ORDER,
+    DIRECTION_THRESHOLD_ORDER,
     DOMAIN,
     HELPER_AGGREGATOR,
     HELPER_MONITORED_ENTITY,
@@ -61,6 +66,15 @@ from .const import (
 )
 
 COMPARISON_EQUALS = COMPARISON_OPTIONS[0]
+
+
+def _number(*, non_negative: bool = False) -> selector.NumberSelector:
+    cfg = selector.NumberSelectorConfig(
+        mode=selector.NumberSelectorMode.BOX, step="any"
+    )
+    if non_negative:
+        cfg["min"] = 0
+    return selector.NumberSelector(cfg)
 
 
 def _select(options: list[str], key: str) -> selector.SelectSelector:
@@ -102,8 +116,20 @@ def _aggregator_schema() -> vol.Schema:
 # --- monitored entity --------------------------------------------------
 
 
-def _kind_schema(kind: str, current_value: str | None) -> vol.Schema:
-    """The per-kind question set, plus the shared 'no value' choice."""
+def _unavailable_field() -> dict[Any, Any]:
+    return {
+        vol.Required(CONF_UNAVAILABLE_IS, default=UNAVAILABLE_PROBLEM): _select(
+            UNAVAILABLE_OPTIONS, "unavailable_is"
+        )
+    }
+
+
+def _kind_schema(kind: str) -> vol.Schema:
+    """The per-kind question set for boolean / string / template, plus 'no value'.
+
+    Numeric is handled separately (a threshold or a range — never both) via
+    ``_numeric_threshold_schema`` / ``_numeric_range_schema``.
+    """
     fields: dict[Any, Any] = {}
 
     if kind == KIND_TEMPLATE:
@@ -112,26 +138,6 @@ def _kind_schema(kind: str, current_value: str | None) -> vol.Schema:
     elif kind == KIND_BOOLEAN:
         fields[vol.Required(CONF_BAD_STATE, default="on")] = _select(
             BAD_STATE_OPTIONS, "bad_state"
-        )
-    elif kind == KIND_NUMERIC:
-        suggested = _as_float(current_value)
-        threshold_field = (
-            vol.Required(CONF_THRESHOLD, default=suggested)
-            if suggested is not None
-            else vol.Required(CONF_THRESHOLD)
-        )
-        fields[threshold_field] = selector.NumberSelector(
-            selector.NumberSelectorConfig(
-                mode=selector.NumberSelectorMode.BOX, step="any"
-            )
-        )
-        fields[vol.Required(CONF_DIRECTION, default=DIRECTION_BELOW)] = _select(
-            DIRECTION_OPTIONS, "direction"
-        )
-        fields[vol.Optional(CONF_HYSTERESIS, default=0)] = selector.NumberSelector(
-            selector.NumberSelectorConfig(
-                mode=selector.NumberSelectorMode.BOX, step="any", min=0
-            )
         )
     else:  # KIND_STRING
         fields[vol.Required(CONF_MATCH_TEXT)] = selector.TextSelector()
@@ -142,17 +148,58 @@ def _kind_schema(kind: str, current_value: str | None) -> vol.Schema:
             MATCH_MODE_OPTIONS, "match_mode"
         )
 
-    fields[vol.Required(CONF_UNAVAILABLE_IS, default=UNAVAILABLE_PROBLEM)] = _select(
-        UNAVAILABLE_OPTIONS, "unavailable_is"
+    return vol.Schema({**fields, **_unavailable_field()})
+
+
+def _numeric_threshold_schema(current_value: str | None) -> vol.Schema:
+    """A single cut-off: a problem below (or above) one threshold."""
+    suggested = _as_float(current_value)
+    threshold = (
+        vol.Required(CONF_THRESHOLD, default=suggested)
+        if suggested is not None
+        else vol.Required(CONF_THRESHOLD)
     )
-    return vol.Schema(fields)
+    return vol.Schema(
+        {
+            vol.Required(CONF_DIRECTION, default=DIRECTION_BELOW): _select(
+                list(DIRECTION_THRESHOLD_ORDER), "direction"
+            ),
+            threshold: _number(),
+            vol.Optional(CONF_HYSTERESIS, default=0): _number(non_negative=True),
+            **_unavailable_field(),
+        }
+    )
 
 
-def _as_float(raw: str | None) -> float | None:
+def _numeric_range_schema() -> vol.Schema:
+    """A band: a problem outside (or inside) a low/high range."""
+    return vol.Schema(
+        {
+            vol.Required(CONF_DIRECTION, default=DIRECTION_OUTSIDE): _select(
+                list(DIRECTION_RANGE_ORDER), "direction"
+            ),
+            vol.Required(CONF_RANGE_LOW): _number(),
+            vol.Required(CONF_RANGE_HIGH): _number(),
+            vol.Optional(CONF_HYSTERESIS, default=0): _number(non_negative=True),
+            **_unavailable_field(),
+        }
+    )
+
+
+def _as_float(raw: str | float | None) -> float | None:
     try:
         return float(raw)  # type: ignore[arg-type]
     except (TypeError, ValueError):
         return None
+
+
+def _range_error(data: dict[str, Any]) -> dict[str, str]:
+    """The one range check the schema can't do: the bounds must differ."""
+    low = _as_float(data.get(CONF_RANGE_LOW))
+    high = _as_float(data.get(CONF_RANGE_HIGH))
+    if low is not None and high is not None and low == high:
+        return {CONF_RANGE_LOW: "range_equal"}
+    return {}
 
 
 def _default_name(hass, entity_id: str) -> str:
@@ -210,27 +257,74 @@ class WarningAggregatorConfigFlow(ConfigFlow, domain=DOMAIN):
             data_schema=self.add_suggested_values_to_schema(schema, user_input or {}),
         )
 
+    @property
+    def _me_placeholders(self) -> dict[str, str]:
+        state = self.hass.states.get(self._me[CONF_ENTITY_ID])
+        return {
+            "entity": self._me[CONF_ENTITY_ID],
+            "kind": self._me[CONF_KIND],
+            "value": state.state if state else "unavailable",
+        }
+
+    def _me_entry(self, user_input: dict[str, Any]) -> ConfigFlowResult:
+        return self.async_create_entry(
+            title=self._me[CONF_NAME], data={**self._me, **user_input}
+        )
+
     async def async_step_configure_check(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Ask only the questions that matter for the detected kind."""
         kind = self._me[CONF_KIND]
-        state = self.hass.states.get(self._me[CONF_ENTITY_ID])
+        if kind == KIND_NUMERIC:
+            return await self.async_step_numeric_kind()
 
         if user_input is not None:
-            return self.async_create_entry(
-                title=self._me[CONF_NAME],
-                data={**self._me, **user_input},
-            )
+            return self._me_entry(user_input)
 
         return self.async_show_form(
             step_id="configure_check",
-            data_schema=_kind_schema(kind, state.state if state else None),
-            description_placeholders={
-                "entity": self._me[CONF_ENTITY_ID],
-                "kind": kind,
-                "value": state.state if state else "unavailable",
-            },
+            data_schema=_kind_schema(kind),
+            description_placeholders=self._me_placeholders,
+        )
+
+    async def async_step_numeric_kind(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """A number monitor is a single threshold OR a range — pick one."""
+        return self.async_show_menu(
+            step_id="numeric_kind",
+            menu_options=["numeric_threshold", "numeric_range"],
+            description_placeholders=self._me_placeholders,
+        )
+
+    async def async_step_numeric_threshold(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            return self._me_entry(user_input)
+        state = self.hass.states.get(self._me[CONF_ENTITY_ID])
+        return self.async_show_form(
+            step_id="numeric_threshold",
+            data_schema=_numeric_threshold_schema(state.state if state else None),
+            description_placeholders=self._me_placeholders,
+        )
+
+    async def async_step_numeric_range(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            errors = _range_error(user_input)
+            if not errors:
+                return self._me_entry(user_input)
+        return self.async_show_form(
+            step_id="numeric_range",
+            data_schema=self.add_suggested_values_to_schema(
+                _numeric_range_schema(), user_input or {}
+            ),
+            description_placeholders=self._me_placeholders,
+            errors=errors,
         )
 
     # -- template check ------------------------------------------------
@@ -265,7 +359,7 @@ class WarningAggregatorConfigFlow(ConfigFlow, domain=DOMAIN):
                     selector.LabelSelectorConfig(multiple=True)
                 ),
             }
-        ).extend(_kind_schema(KIND_TEMPLATE, None).schema)
+        ).extend(_kind_schema(KIND_TEMPLATE).schema)
         return self.async_show_form(
             step_id="template",
             data_schema=self.add_suggested_values_to_schema(schema, user_input or {}),
@@ -348,24 +442,92 @@ class MonitoredEntityOptionsFlow(OptionsFlow):
     ) -> ConfigFlowResult:
         return await self.async_step_retune(user_input)
 
+    @property
+    def _current(self) -> dict[str, Any]:
+        return {**self.config_entry.data, **self.config_entry.options}
+
+    @property
+    def _retune_placeholders(self) -> dict[str, str]:
+        current = self._current
+        watched = current.get(CONF_ENTITY_ID)
+        state = self.hass.states.get(watched) if watched else None
+        return {
+            "entity": watched or "a template",
+            "kind": current[CONF_KIND],
+            "value": state.state if state else "n/a",
+        }
+
+    def _watched_value(self) -> str | None:
+        watched = self._current.get(CONF_ENTITY_ID)
+        state = self.hass.states.get(watched) if watched else None
+        return state.state if state else None
+
     async def async_step_retune(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        current = self._current
+        kind = current[CONF_KIND]
+
+        if kind == KIND_NUMERIC:
+            return await self.async_step_retune_numeric_kind()
+
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+
+        return self.async_show_form(
+            step_id="retune",
+            data_schema=self.add_suggested_values_to_schema(
+                _kind_schema(kind), current
+            ),
+            description_placeholders=self._retune_placeholders,
+        )
+
+    async def async_step_retune_numeric_kind(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Re-tune a threshold or a range — the current one is marked."""
+        is_range = self._current.get(CONF_DIRECTION) in DIRECTION_RANGE
+        here = "   ← current"
+        return self.async_show_menu(
+            step_id="retune_numeric_kind",
+            menu_options={
+                "retune_threshold": "A threshold — a problem below or above one value"
+                + ("" if is_range else here),
+                "retune_range": "A range — a problem outside or inside a band"
+                + (here if is_range else ""),
+            },
+            description_placeholders={
+                **self._retune_placeholders,
+                "current_mode": "a range" if is_range else "a threshold",
+            },
+        )
+
+    async def async_step_retune_threshold(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         if user_input is not None:
             return self.async_create_entry(data=user_input)
-
-        current = {**self.config_entry.data, **self.config_entry.options}
-        kind = current[CONF_KIND]
-        watched = current.get(CONF_ENTITY_ID)
-        state = self.hass.states.get(watched) if watched else None
         return self.async_show_form(
-            step_id="retune",
+            step_id="retune_threshold",
             data_schema=self.add_suggested_values_to_schema(
-                _kind_schema(kind, state.state if state else None), current
+                _numeric_threshold_schema(self._watched_value()), self._current
             ),
-            description_placeholders={
-                "entity": watched or "a template",
-                "kind": kind,
-                "value": state.state if state else "n/a",
-            },
+            description_placeholders=self._retune_placeholders,
+        )
+
+    async def async_step_retune_range(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            errors = _range_error(user_input)
+            if not errors:
+                return self.async_create_entry(data=user_input)
+        return self.async_show_form(
+            step_id="retune_range",
+            data_schema=self.add_suggested_values_to_schema(
+                _numeric_range_schema(), user_input or self._current
+            ),
+            description_placeholders=self._retune_placeholders,
+            errors=errors,
         )

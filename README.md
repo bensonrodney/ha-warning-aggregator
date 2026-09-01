@@ -110,11 +110,11 @@ dropping out…
    | If the entity is… | The form asks |
    | --- | --- |
    | a switch / toggle / `binary_sensor` | **Problem when the state is** → `on` or `off` |
-   | a number | **Threshold**, **Problem when the value is** `below` / `above`, and an optional **Hysteresis** (deadband so it doesn't flap around the threshold) |
+   | a number | first pick **a threshold** or **a range** — then, for a threshold, **Problem when the value is** `below` / `above` it; for a range, `outside` / `inside` a **lower + upper bound**. Both offer an optional **Hysteresis** (deadband so it doesn't flap around the edge) |
    | text | **Text to match** (case-insensitive), **Comparison** `equals` / `contains`, and **A match means** `a problem` or `OK` (anything else being the problem) |
    | *any of the above* | **When there is no value** (unavailable / unknown / null) → *treat as a problem* (default) or *treat as OK* |
 
-<img src="docs/images/monitor-entity.png" alt="The adaptive check form for a numeric entity" width="620">
+<img src="docs/images/monitor-entity.png" alt="Picking a threshold or a range for a numeric monitor" width="560">
 
 You get `binary_sensor.warn_agg_<name>` (device class **Problem**) — `on` when the
 check fails — with a **`reason`** attribute explaining the verdict (`12 is below
@@ -123,8 +123,9 @@ together in the entity list and pickers; the friendly name stays whatever you
 typed, and you can still rename the entity_id afterwards. Because you labelled it,
 `binary_sensor.house_status` now counts it.
 
-The cog icon re-tunes the thresholds. To watch a *different* entity, delete the
-helper and make a new one.
+The cog icon re-tunes the check (for a number, it shows which of threshold /
+range you're on so you can just adjust values, or switch). To watch a
+*different* entity, delete the helper and make a new one.
 
 > You can also skip the wrapper: put the `Monitored` label straight onto any
 > native `problem` binary_sensor and the aggregator will include it.
