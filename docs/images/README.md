@@ -17,6 +17,17 @@ src>` 404s in HACS; an absolute one drifts to whatever `main` holds.
 Overwrite files in place — don't rename or delete — so tag-pinned links in
 already-published releases keep resolving.
 
+**Size them for display.** Markdown images render at their natural pixel width
+(capped to the page), so a raw 2× Playwright capture looks huge. After
+capturing, downscale to **≈560 px wide** for the dialog shots and **≈400 px**
+for the card shots:
+
+```python
+from PIL import Image
+im = Image.open(path); w = 560
+im.resize((w, round(im.height * w / im.width)), Image.LANCZOS).save(path, optimize=True)
+```
+
 | File | Shows |
 | --- | --- |
 | `wa-menu.png` | the **Warning Aggregator** helper-type menu (Monitored entity / Template check / Aggregator) |
