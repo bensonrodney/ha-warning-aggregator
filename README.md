@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/bensonrodney/ha-warning-aggregator/main/brands/custom_integrations/warning_aggregator/logo.png" alt="Warning Aggregator" width="220">
-</p>
+![Warning Aggregator](brands/custom_integrations/warning_aggregator/logo.png)
 
 # Warning Aggregator
 
@@ -74,7 +72,7 @@ entity that carries a label you choose.
    Aggregator**.
 3. Choose **Aggregator**.
 
-   <img src="https://raw.githubusercontent.com/bensonrodney/ha-warning-aggregator/main/docs/images/wa-menu.png" alt="The Warning Aggregator helper-type menu: Monitored entity, Template check or Aggregator" width="560">
+   ![The Warning Aggregator helper-type menu: Monitored entity, Template check or Aggregator](docs/images/wa-menu.png)
 
 4. Fill in the form and **Submit**:
 
@@ -85,7 +83,7 @@ entity that carries a label you choose.
    | **Label matching** | *Any label* — watch entities in any selected label (*All* = only entities carrying every one) |
    | **States treated as a problem** | leave as `warning` — Monitored-entity sensors are always counted regardless |
 
-<img src="https://raw.githubusercontent.com/bensonrodney/ha-warning-aggregator/main/docs/images/create-aggregator.png" alt="The Aggregator helper form" width="620">
+![The Aggregator helper form](docs/images/create-aggregator.png)
 
 `binary_sensor.house_status` is now created. It stays **off** until a monitored
 entity trips. To change any of this later: **Helpers →** click the helper **→ the
@@ -114,7 +112,7 @@ dropping out…
    | text | **Text to match** (case-insensitive), **Comparison** `equals` / `contains`, and **A match means** `a problem` or `OK` (anything else being the problem) |
    | *any of the above* | **When there is no value** (unavailable / unknown / null) → *treat as a problem* (default) or *treat as OK* |
 
-<img src="https://raw.githubusercontent.com/bensonrodney/ha-warning-aggregator/main/docs/images/monitor-entity.png" alt="Picking a threshold or a range for a numeric monitor" width="560">
+![Picking a threshold or a range for a numeric monitor](docs/images/monitor-entity.png)
 
 You get `binary_sensor.warn_agg_<name>` (device class **Problem**) — `on` when the
 check fails — with a **`reason`** attribute explaining the verdict (`12 is below
@@ -136,7 +134,7 @@ When the adaptive form can't express the rule — comparing two entities, a time
 window, "any of these three" — choose **Template check** from the same menu
 instead of *Monitored entity*.
 
-<img src="https://raw.githubusercontent.com/bensonrodney/ha-warning-aggregator/main/docs/images/monitor-template.png" alt="The Template check form" width="620">
+![The Template check form](docs/images/monitor-template.png)
 
 - **Problem template** — a problem when it renders truthy (`true`, `"on"`, a
   non-empty string); OK when it renders `false` / `""` / `"off"`. Same rule as a
@@ -172,10 +170,9 @@ Green **"All Sensors OK"** when nothing is wrong; otherwise a warning header wit
 the count and a tap-through list of the tripped monitors (tap a row for its
 more-info dialog).
 
-<p>
-  <img src="https://raw.githubusercontent.com/bensonrodney/ha-warning-aggregator/main/docs/images/card-ok.png" alt="Card: all sensors OK" width="330">
-  <img src="https://raw.githubusercontent.com/bensonrodney/ha-warning-aggregator/main/docs/images/card-problem.png" alt="Card: two sensors need attention, listed" width="330">
-</p>
+| All OK | Something's wrong |
+| --- | --- |
+| ![Card: all sensors OK](docs/images/card-ok.png) | ![Card: warning header with the tripped monitors listed](docs/images/card-problem.png) |
 
 <details><summary>YAML / all card options</summary>
 
@@ -189,8 +186,8 @@ entity: binary_sensor.house_status
 ```
 
 **Label mode** — build the list from a label instead of an aggregator sensor
-(works with the plain [template-helper pattern][pattern], no integration entity
-needed):
+(works with the plain [template-helper pattern](docs/pattern.md), no integration
+entity needed):
 
 ```yaml
 type: custom:warning-aggregator-card
@@ -319,8 +316,8 @@ release exists.
 
 ## Credits
 
-Inspired by the community "one System Warning sensor" [template-helper
-pattern][pattern]. README structure follows
+Inspired by the community "one System Warning sensor"
+[template-helper pattern](docs/pattern.md). README structure follows
 [`integration_blueprint`](https://github.com/ludeeus/integration_blueprint).
 
 ---
@@ -334,5 +331,4 @@ pattern][pattern]. README structure follows
 [user_profile]: https://github.com/bensonrodney
 [validate-workflow]: https://github.com/bensonrodney/ha-warning-aggregator/actions/workflows/validate.yml
 [validate-shield]: https://img.shields.io/github/actions/workflow/status/bensonrodney/ha-warning-aggregator/validate.yml?style=for-the-badge&label=validate
-[pattern]: https://github.com/bensonrodney/ha-warning-aggregator/blob/main/docs/pattern.md
 [blueprint-import]: https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fbensonrodney%2Fha-warning-aggregator%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fwarning_aggregator%2Fon_problem.yaml

@@ -6,11 +6,16 @@ Assistant on a sandbox instance (Playwright).
 **Dark mode only** — capture every screenshot with the browser context in
 `color_scheme="dark"`. No light-mode twins.
 
-**Reference them from the root README with absolute `raw.githubusercontent.com`
-URLs** (`.../ha-warning-aggregator/main/docs/images/<file>`), not relative
-`<img src="docs/images/...">`. HACS's info panel only rewrites relative paths
-inside markdown `![]()` / `[]()` syntax — an HTML `<img>` with a relative `src`
-404s there. GitHub renders both, so absolute is the one that works everywhere.
+**Reference them from the root README with Markdown syntax and a relative path**
+— `![alt](docs/images/<file>)`, never an HTML `<img>` tag. HACS's info panel
+rewrites relative paths *only* inside `![]()` / `[]()` syntax (to
+`raw.githubusercontent.com/<repo>/<release-tag>/…`), so Markdown images stay
+pinned to the tag of whatever release is being viewed — no per-release edits,
+and old release notes never point at a moved/renamed file. A relative `<img
+src>` 404s in HACS; an absolute one drifts to whatever `main` holds.
+
+Overwrite files in place — don't rename or delete — so tag-pinned links in
+already-published releases keep resolving.
 
 | File | Shows |
 | --- | --- |
