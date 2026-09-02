@@ -9,7 +9,10 @@ blueprint:
   input:
     warning_sensor:
       name: Warning sensor
-      description: A Warning Aggregator or monitored-entity problem sensor.
+      description: >
+        Normally an aggregator's sensor, so this fires on any problem it rolls
+        up. A single monitored-entity sensor works too if you only care about
+        that one thing.
       selector:
         entity:
           filter:

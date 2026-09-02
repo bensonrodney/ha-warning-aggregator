@@ -32,7 +32,7 @@ UI-configured helpers and a Lovelace card.
 | `binary_sensor` | One `problem` sensor per **Monitored entity** / **Template check**, and one per **Aggregator**. |
 | `sensor` | A `<name> Problem count` for each **Aggregator**. |
 | Lovelace card | `custom:warning-aggregator-card`, registered automatically — no resource to add. |
-| Automation blueprint | _Warning Aggregator — act on a problem_, [one-click import](#trigger-an-automation-on-good--not-good). |
+| Automation blueprint | _Warning Aggregator — act on a problem_, [one-click import](#trigger-an-automation-on-a-problem-or-the-all-clear). |
 
 **Requires Home Assistant 2025.1 or newer.**
 
@@ -196,26 +196,45 @@ problem_states: [warning]   # states counted as a problem (default: [warning])
 ```
 </details>
 
-### Trigger an automation on good ↔ not-good
+### Trigger an automation on a problem (or the all-clear)
 
 Every aggregator and monitored entity is a `binary_sensor` with the `problem`
-device class, so an automation triggers on the same boolean the card uses.
+device class. **Point automations at an _aggregator_ sensor**, not an individual
+monitor — then one automation covers *any* problem among everything that
+aggregator watches. (Target a single monitor only if you want to react to just
+that one thing.)
 
-**With the blueprint (recommended).** Import it once:
+**1. Start a new automation.** **Settings → Automations & scenes → ➕ Create
+automation → _Create new automation_.**
 
-[![Open your Home Assistant instance and show the blueprint import dialog.](https://my.home-assistant.io/badges/blueprint_import.svg)][blueprint-import]
+**2. Add the trigger.** Under **When**, **➕ Add trigger**, then in the search box
+type the aggregator's name. Pick it from **Entities** — the **Binary sensor**
+result, *not* the device (Home Assistant's editor doesn't offer device triggers
+here). Choose **State**.
 
-…then **Settings → Automations → Create automation → _Warning Aggregator — act on
-a problem_**. Pick the sensor, drop in what to do, save. The trigger is built in:
-it fires the **moment the sensor leaves OK** — for any reason, including the
-sensor itself dropping out. A second action for "back to OK" is optional.
+**3. Set what counts as "firing".** The State trigger has a **From** and a **To**
+field; because the sensor is a `problem` sensor, both list **OK** / **Problem**:
 
-**By hand.** Add a trigger → search the sensor by name → pick the **binary
-sensor** entity → **State**. Set **From** to **OK** and leave **To** blank — that
-is the "as soon as anything is wrong" trigger. (**To → Problem** instead only
-catches a clean OK→problem flip and misses the sensor going unavailable.) Home
-Assistant's editor doesn't list device triggers, so this entity State trigger is
-the manual route.
+| Set… | Leave… | The automation runs… |
+| --- | --- | --- |
+| **From → OK** | **To** empty | whenever the aggregator *leaves* OK — a monitored sensor develops a problem, **or** a sensor itself drops out (goes unavailable) |
+| **To → OK** | **From** empty | whenever the aggregator is healthy *again* — everything it watches has cleared |
+
+Setting **To → Problem** instead of **From → OK** also works, but it only catches
+a clean OK→problem flip and misses a sensor going unavailable.
+
+**4. Add the actions** under **Then do**, then **Save** and give the automation a
+name you'll recognise (the aggregator it watches is a good one).
+
+In the actions,
+`{{ state_attr('binary_sensor.<aggregator>', 'problem_names') }}` is the list of
+what's currently tripped — useful for the message text (see
+[Get notified](#get-notified) for a full example).
+
+**Shortcut: the blueprint.** _Warning Aggregator — act on a problem_ has the
+"leaves OK" trigger already wired, plus an optional second action for "back to
+OK". [Import it][blueprint-import], then create an automation from it via
+**Settings → Automations** (not the Blueprints page, so you're asked to name it).
 
 ### Get notified
 
@@ -227,7 +246,7 @@ mode: single
 triggers:
   - trigger: state
     entity_id: binary_sensor.house_status
-    from: "off" # left OK — fires on any problem, incl. the sensor dropping out
+    from: "off" # left OK — fires on any problem; use `to: "off"` for the all-clear
 variables:
   tripped: "{{ state_attr('binary_sensor.house_status', 'problem_names') }}"
 actions:
