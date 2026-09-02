@@ -6,7 +6,7 @@
  * plus the list of monitors that are not OK.
  */
 
-const VERSION = "0.3.3";
+const VERSION = "0.3.4";
 
 const OK_ICON = "mdi:check-circle";
 const PROBLEM_ICON = "mdi:alert";
